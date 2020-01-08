@@ -1,0 +1,65 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "smallIconUri": "https://raw.githubusercontent.com/jsetton/alexa-ourgroceries-sync/master/resources/icons/ourgroceries-108.png",
+          "largeIconUri": "https://raw.githubusercontent.com/jsetton/alexa-ourgroceries-sync/master/resources/icons/ourgroceries-512.png"
+        }
+      },
+      "isAvailableWorldwide": false,
+      "category": "ORGANIZERS_AND_ASSISTANTS",
+      "distributionMode": "PRIVATE",
+      "distributionCountries": [
+        "US"
+      ]
+    },
+    "apis": {
+      "householdList": {}
+    },
+    "manifestVersion": "1.0",
+    "permissions": [
+      {
+        "name": "alexa::household:lists:read"
+      },
+      {
+        "name": "alexa::household:lists:write"
+      }
+    ],
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "isChildDirected": false,
+      "usesPersonalInfo": false
+    },
+    "events": {
+      "endpoint": {
+        "uri": "alexa-ourgroceries-sync"
+      },
+      "subscriptions": [
+        {
+          "eventName": "SKILL_DISABLED"
+        },
+        {
+          "eventName": "SKILL_PERMISSION_ACCEPTED"
+        },
+        {
+          "eventName": "SKILL_PERMISSION_CHANGED"
+        },
+        {
+          "eventName": "ITEMS_CREATED"
+        },
+        {
+          "eventName": "ITEMS_UPDATED"
+        },
+        {
+          "eventName": "ITEMS_DELETED"
+        }
+      ]
+    }
+  }
+}
