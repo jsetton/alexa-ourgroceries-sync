@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const config = require('./config.js');
 // Set region to lambda function one (default: us-east-1)
 AWS.config.update({region: process.env.AWS_REGION || 'us-east-1'});
 // Create CloudWatchEvents service object
@@ -8,9 +9,9 @@ const cwevents = new AWS.CloudWatchEvents();
 // Create Lambda service object
 const lambda = new AWS.Lambda();
 // Define event rule schedule name
-const ruleName = 'AlexaOurGroceriesSyncSchedule';
+const ruleName = config.AWS_SCHEDULE_NAME;
 // Define event rule target id
-const targetId = 'AlexaOurGroceriesSyncTarget';
+const targetId = `${ruleName}Target`;
 
 /**
  * Create event rule schedule

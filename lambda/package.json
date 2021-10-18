@@ -1,6 +1,6 @@
 {
   "name": "alexa-ourgroceries-sync",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "alexa ourgroceries shopping list synchronization",
   "main": "index.js",
   "scripts": {
@@ -9,11 +9,11 @@
   "author": "Jeremy Setton",
   "license": "MIT License",
   "dependencies": {
-    "ask-sdk-core": "^2.7.0",
-    "ask-sdk-dynamodb-persistence-adapter": "^2.7.0",
-    "ask-sdk-model": "^1.25.1",
-    "aws-sdk": "^2.610.0",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.8"
+    "ask-sdk-core": "^2.11.0",
+    "ask-sdk-dynamodb-persistence-adapter": "^2.11.0",
+    "ask-sdk-model": "^1.36.1",
+    "aws-sdk": "^2.1008.0",
+    "request": "^2.88.2",
+    "request-promise-native": "^1.0.9"
   }
 }

@@ -1,0 +1,31 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "largeIconUri": "file://assets/images/en-US_largeIcon.png",
+          "smallIconUri": "file://assets/images/en-US_smallIcon.png"
+        }
+      },
+      "distributionCountries": [],
+      "isAvailableWorldwide": true,
+      "distributionMode": "PRIVATE",
+      "category": "ORGANIZERS_AND_ASSISTANTS"
+    },
+    "permissions": [
+      {
+        "name": "alexa::household:lists:read"
+      },
+      {
+        "name": "alexa::household:lists:write"
+      }
+    ],
+    "apis": {
+      "householdList": {}
+    }
+  }
+}

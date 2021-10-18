@@ -128,8 +128,7 @@ const LogRequestInterceptor = {
 };
 
 const persistenceAdapter = new DynamoDbPersistenceAdapter({
-  tableName: 'AlexaOurGroceriesSyncSettings',
-  createTable: true,
+  tableName: config.AWS_TABLE_NAME,
   partitionKeyName: 'userId'
 });
 
@@ -158,7 +157,7 @@ const skillHandler = Alexa.SkillBuilders.custom()
   .addRequestInterceptors(LogRequestInterceptor)
   .withApiClient(new Alexa.DefaultApiClient())
   .withPersistenceAdapter(persistenceAdapter)
-  .withSkillId(config.SKILL_APP_ID)
+  .withSkillId(config.SKILL_ID)
   .lambda();
 
 exports.handler = (event, context, callback) =>

@@ -10,7 +10,10 @@ module.exports = Object.freeze({
   OUR_GROCERIES_PASSWORD: process.env.OUR_GROCERIES_PASSWORD,
   OUR_GROCERIES_SHOPPING_LIST: process.env.OUR_GROCERIES_SHOPPING_LIST,
   // Skill
-  SKILL_APP_ID: process.env.SKILL_APP_ID,
+  SKILL_ID: process.env.SKILL_ID,
   SKILL_CLIENT_ID: process.env.SKILL_CLIENT_ID,
   SKILL_CLIENT_SECRET: process.env.SKILL_CLIENT_SECRET,
+  // AWS
+  AWS_SCHEDULE_NAME: process.env.SCHEDULE_NAME || 'AlexaOurGroceriesSyncSchedule',
+  AWS_TABLE_NAME: process.env.TABLE_NAME || 'AlexaOurGroceriesSyncSettings'
 });
