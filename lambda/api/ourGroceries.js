@@ -38,8 +38,7 @@ class OurGroceriesClient {
       form: {
         emailAddress: this.username,
         password: this.password,
-        action: 'sign-me-in',
-        staySignedIn: 'on'
+        action: 'sign-in'
       }
     };
     return request(options)

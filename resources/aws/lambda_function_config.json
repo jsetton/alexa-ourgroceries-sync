@@ -1,7 +1,0 @@
-{
-    "Runtime": "nodejs12.x",
-    "Handler": "index.handler",
-    "Description": "OurGroceries List Sync with Alexa",
-    "Timeout": 5,
-    "MemorySize": 128
-}

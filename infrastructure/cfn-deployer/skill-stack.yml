@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AlexaApiUrl:
+    Default: https://api.amazonalexa.com
+    Type: String
+  AlexaShoppingList:
+    Default: Alexa shopping list
+    Type: String
+  OurGroceriesApiUrl:
+    Default: https://www.ourgroceries.com
+    Type: String
+  OurGroceriesUsername:
+    Type: String
+  OurGroceriesPassword:
+    Type: String
+  OurGroceriesShoppingList:
+    Type: String
+  SkillId:
+    Type: String
+  SkillClientId:
+    Type: String
+  SkillClientSecret:
+    Type: String
+  DatabaseTableName:
+    Default: AlexaOurGroceriesSyncSettings
+    Type: String
+  EventScheduleName:
+    Default: AlexaOurGroceriesSyncSchedule
+    Type: String
+  LambdaFunctionName:
+    Default: alexa-ourgroceries-sync
+    Type: String
+  LambdaRuntime:
+    Type: String
+  LambdaHandler:
+    Type: String
+  CodeBucket:
+    Type: String
+  CodeKey:
+    Type: String
+  CodeVersion:
+    Type: String
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: !Ref DatabaseTableName
+  AlexaSkillIAMRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Path: /
+        Policies:
+          - PolicyName: AlexaOurGroceriesSync
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}:*
+                - Effect: Allow
+                  Action:
+                    - dynamodb:DeleteItem
+                    - dynamodb:GetItem
+                    - dynamodb:PutItem
+                  Resource: !Sub ${DynamoDBTable.Arn}*
+                - Effect: Allow
+                  Action:
+                    - events:DeleteRule
+                    - events:PutRule
+                    - events:PutTargets
+                    - events:RemoveTargets
+                  Resource: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${EventScheduleName}
+                - Effect: Allow
+                  Action:
+                    - lambda:AddPermission
+                    - lambda:RemovePermission
+                  Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}
+  AlexaSkillFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
+        S3ObjectVersion: !Ref CodeVersion
+      FunctionName: !Ref LambdaFunctionName
+      Description: OurGroceries List Sync with Alexa
+      Handler: !Ref LambdaHandler
+      Runtime: !Ref LambdaRuntime
+      Role: !GetAtt AlexaSkillIAMRole.Arn
+      MemorySize: 128
+      Timeout: 5
+      Environment:
+        Variables:
+          ALEXA_API_URL: !Ref AlexaApiUrl
+          ALEXA_SHOPPING_LIST: !Ref AlexaShoppingList
+          OUR_GROCERIES_API_URL: !Ref OurGroceriesApiUrl
+          OUR_GROCERIES_USERNAME: !Ref OurGroceriesUsername
+          OUR_GROCERIES_PASSWORD: !Ref OurGroceriesPassword
+          OUR_GROCERIES_SHOPPING_LIST: !Ref OurGroceriesShoppingList
+          SKILL_ID: !Ref SkillId
+          SKILL_CLIENT_ID: !Ref SkillClientId
+          SKILL_CLIENT_SECRET: !Ref SkillClientSecret
+          SCHEDULE_NAME: !Ref EventScheduleName
+          TABLE_NAME: !Ref DatabaseTableName
+  AlexaSkillFunctionEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:invokeFunction
+      FunctionName: !GetAtt AlexaSkillFunction.Arn
+      Principal: alexa-appkit.amazon.com
+      EventSourceToken: !Ref SkillId
+  AlexaSkillFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AlexaSkillFunction}
+      RetentionInDays: 30
+Outputs:
+  SkillEndpoint:
+    Description: LambdaARN for the regional endpoint
+    Value: !GetAtt AlexaSkillFunction.Arn
