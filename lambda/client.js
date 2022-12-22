@@ -1,7 +1,4 @@
-'use strict';
-
-const OurGroceriesClient = require('./api/ourGroceries.js');
-const config = require('./config.js');
+import OurGroceriesClient from './api/ourGroceries.js';
 
 /**
  * Defines item value pattern
@@ -12,10 +9,14 @@ const ITEM_VALUE_PATTERN = /^([\w\s]+)(?: \((\d+)\))?$/;
 /**
  * Defines sync list client class
  */
-class SyncListClient {
+export default class SyncListClient {
+  /**
+   * Constructor
+   * @param {Object} householdListManager
+   * @param {Object} syncedList
+   */
   constructor(householdListManager, syncedList = {}) {
-    this.ourGroceriesClient = new OurGroceriesClient(
-      config.OUR_GROCERIES_API_URL, config.OUR_GROCERIES_USERNAME, config.OUR_GROCERIES_PASSWORD);
+    this.ourGroceriesClient = new OurGroceriesClient();
     this.householdListManager = householdListManager;
     this.syncedList = syncedList;
   }
@@ -28,7 +29,7 @@ class SyncListClient {
     // Get all lists
     const { lists } = await this.householdListManager.getListsMetadata();
     // Find shopping list
-    const match = lists.find(list => list.name === config.ALEXA_SHOPPING_LIST);
+    const match = lists.find(list => list.name === process.env.ALEXA_SHOPPING_LIST);
 
     if (typeof match !== 'undefined') {
       // Get shopping list active and completed items
@@ -37,7 +38,7 @@ class SyncListClient {
         this.householdListManager.getList(match.listId, 'completed')
       ]);
       // Return shopping list merging active & completed items
-      return Object.assign(active, {items: [].concat(active.items, completed.items)});
+      return { ...active, items: [].concat(active.items, completed.items) };
     }
   }
 
@@ -49,7 +50,7 @@ class SyncListClient {
     // Get shopping lists
     const { shoppingLists } = await this.ourGroceriesClient.getLists();
     // Find shopping list
-    const match = shoppingLists.find(list => list.name === config.OUR_GROCERIES_SHOPPING_LIST);
+    const match = shoppingLists.find(list => list.name === process.env.OUR_GROCERIES_SHOPPING_LIST);
 
     if (typeof match !== 'undefined') {
       // Get shopping list details
@@ -166,12 +167,10 @@ class SyncListClient {
                     value: value, status: alexaItem.status, version: syncedItem.version}
                 ).then((item) => {
                   // Update synced item
-                  Object.assign(syncedItem, {
-                    status: item.status,
-                    updatedTime: new Date(item.updatedTime).toISOString(),
-                    quantity: quantity,
-                    version: item.version
-                  });
+                  syncedItem.status = item.status;
+                  syncedItem.updatedTime = new Date(item.updatedTime).toISOString();
+                  syncedItem.quantity = quantity;
+                  syncedItem.version = item.version;
                 })
               );
 
@@ -230,13 +229,11 @@ class SyncListClient {
               }
 
               // Update synced item
-              Object.assign(syncedItem, {
-                status: alexaItem.status,
-                updatedTime: new Date(alexaItem.updatedTime).toISOString(),
-                value: ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1],
-                quantity: ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1,
-                version: alexaItem.version
-              });
+              syncedItem.status = alexaItem.status;
+              syncedItem.updatedTime = new Date(alexaItem.updatedTime).toISOString();
+              syncedItem.value = ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1];
+              syncedItem.quantity = ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1;
+              syncedItem.version = alexaItem.version;
             }
           } else {
             // Set alexa updated item to be deleted
@@ -266,5 +263,3 @@ class SyncListClient {
     return this.syncedList;
   }
 }
-
-module.exports = SyncListClient;

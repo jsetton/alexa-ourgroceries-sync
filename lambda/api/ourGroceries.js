@@ -1,8 +1,5 @@
-'use strict';
-
-const request = require('request-promise-native').defaults({
-  jar: true
-});
+import got from 'got';
+import { CookieJar } from 'tough-cookie';
 
 /**
  * Defines team id pattern
@@ -13,50 +10,15 @@ const TEAM_ID_PATTERN = /g_teamId = "(\w*)"/;
 /**
  * Defines OurGroceries client class
  */
-class OurGroceriesClient {
+export default class OurGroceriesClient {
   /**
    * Constructor
-   * @param {String} apiUrl
-   * @param {String} username
-   * @param {String} password
    */
-  constructor(apiUrl, username, password) {
-    this.apiUrl = apiUrl;
-    this.username = username;
-    this.password = password;
-  }
-
-  /**
-   * Authenticate
-   * @return {Promise}
-   */
-  authenticate() {
-    const options = {
-      method: 'POST',
-      uri: `${this.apiUrl}/sign-in`,
-      simple: false,
-      form: {
-        emailAddress: this.username,
-        password: this.password,
-        action: 'sign-in'
-      }
-    };
-    return request(options)
-      .then(() => this.getTeamId())
-      .then((teamId) => this.teamId = teamId);
-  }
-
-  /**
-   * Get Team Id
-   * @return {Promise}
-   */
-  getTeamId() {
-    const options = {
-      method: 'GET',
-      uri: `${this.apiUrl}/your-lists/`
-    };
-    return request(options)
-      .then((response) => response.match(TEAM_ID_PATTERN)[1]);
+  constructor() {
+    this.client = got.extend({
+      prefixUrl: process.env.OUR_GROCERIES_API_URL,
+      cookieJar: new CookieJar()
+    });
   }
 
   /**
@@ -198,16 +160,32 @@ class OurGroceriesClient {
    * @return {Promise}
    */
   async handleRequest(parameters = {}) {
-    // Define request options
     const options = {
       method: 'POST',
-      uri: `${this.apiUrl}/your-lists/`,
-      json: Object.assign(parameters, {
-        teamId: this.teamId || await this.authenticate()
-      })
+      url: 'your-lists/',
+      json: {
+        ...parameters,
+        teamId: this.teamId || await this.signIn()
+      }
     };
-    return request(options);
+    return this.client(options).json();
+  }
+
+  /**
+   * Sign in
+   * @return {Promise}
+   */
+  signIn() {
+    const options = {
+      method: 'POST',
+      url: 'sign-in',
+      methodRewriting: true,
+      form: {
+        emailAddress: process.env.OUR_GROCERIES_USERNAME,
+        password: process.env.OUR_GROCERIES_PASSWORD,
+        action: 'sign-in'
+      }
+    };
+    return this.client(options).text().then((response) => this.teamId = response.match(TEAM_ID_PATTERN)[1]);
   }
 }
-
-module.exports = OurGroceriesClient;
