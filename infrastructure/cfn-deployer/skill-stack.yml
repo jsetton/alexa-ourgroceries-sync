@@ -6,6 +6,9 @@ Parameters:
   AlexaShoppingList:
     Default: Alexa shopping list
     Type: String
+  LwaApiUrl:
+    Default: https://api.amazon.com
+    Type: String
   OurGroceriesApiUrl:
     Default: https://www.ourgroceries.com
     Type: String
@@ -113,6 +116,7 @@ Resources:
         Variables:
           ALEXA_API_URL: !Ref AlexaApiUrl
           ALEXA_SHOPPING_LIST: !Ref AlexaShoppingList
+          LWA_API_URL: !Ref LwaApiUrl
           OUR_GROCERIES_API_URL: !Ref OurGroceriesApiUrl
           OUR_GROCERIES_USERNAME: !Ref OurGroceriesUsername
           OUR_GROCERIES_PASSWORD: !Ref OurGroceriesPassword

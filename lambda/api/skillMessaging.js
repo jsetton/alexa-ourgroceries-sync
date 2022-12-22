@@ -1,57 +1,40 @@
-'use strict';
-
-const request = require('request-promise-native');
+import got from 'got';
 
 /**
- * Defines Alexa Skill Messaging API class
+ * Returns skill messaging access token
+ * @return {Promise}
  */
-class SkillMessagingApi {
-  constructor(apiUrl, clientId, clientSecret, userId) {
-    this.apiUrl = apiUrl;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-    this.userId = userId;
-  }
-
-  /**
-   * Get access token
-   * @return {Promise}
-   */
-  getAccessToken() {
-    const options = {
-      method: 'POST',
-      uri: 'https://api.amazon.com/auth/O2/token',
-      json: true,
-      form: {
-        grant_type: 'client_credentials',
-        scope: 'alexa:skill_messaging',
-        client_id: this.clientId,
-        client_secret: this.clientSecret
-      }
-    };
-    return request(options)
-      .then(({ access_token }) => this.accessToken = access_token);
-  }
-
-  /**
-   * Send message
-   * @param  {Object}  data
-   * @return {Promise}
-   */
-  async sendMessage(data = {}) {
-    const options = {
-      method: 'POST',
-      uri: `${this.apiUrl}/v1/skillmessages/users/${this.userId}`,
-      auth: {
-        bearer: this.accessToken || await this.getAccessToken()
-      },
-      json: {
-        data: data,
-        expiresAfterSeconds: 60
-      }
-    };
-    return request(options);
-  }
+const getAccessToken = () => {
+  const options = {
+    method: 'POST',
+    url: `${process.env.LWA_API_URL}/auth/O2/token`,
+    json: {
+      grant_type: 'client_credentials',
+      scope: 'alexa:skill_messaging',
+      client_id: process.env.SKILL_CLIENT_ID,
+      client_secret: process.env.SKILL_CLIENT_SECRET
+    }
+  };
+  return got(options).json().then((response) => response.access_token);
 }
 
-module.exports = SkillMessagingApi;
+/**
+ * Sends skill message
+ * @param  {String} userId
+ * @param  {Object} data
+ * @return {Promise}
+ */
+export const sendSkillMessage = async (userId, data) => {
+  const options = {
+    method: 'POST',
+    url: `${process.env.ALEXA_API_URL}/v1/skillmessages/users/${userId}`,
+    headers: {
+      Authorization: `Bearer ${await getAccessToken()}`
+    },
+    json: {
+      data,
+      expiresAfterSeconds: 60
+    }
+  };
+  return got(options);
+}

@@ -1,11 +1,8 @@
-'use strict';
-
-const Alexa = require('ask-sdk-core');
-const { DynamoDbPersistenceAdapter } = require('ask-sdk-dynamodb-persistence-adapter');
-const SkillMessagingApi = require('./api/skillMessaging.js');
-const SyncListClient = require('./client.js');
-const events = require('./events.js');
-const config = require('./config.js');
+import Alexa from 'ask-sdk-core';
+import { DynamoDbPersistenceAdapter } from 'ask-sdk-dynamodb-persistence-adapter';
+import { sendSkillMessage } from './api/skillMessaging.js';
+import SyncListClient from './client.js';
+import { createEventSchedule, deleteEventSchedule } from './events.js';
 
 const HouseholdListEventHandler = {
   canHandle(handlerInput) {
@@ -18,10 +15,11 @@ const HouseholdListEventHandler = {
       // Get latest user attributes from database
       const attributes = await handlerInput.attributesManager.getPersistentAttributes();
       // Define request object
-      const request = Object.assign(handlerInput.requestEnvelope.request.body, {
+      const request = {
+        ...handlerInput.requestEnvelope.request.body,
         // timestamp: handlerInput.requestEnvelope.request.timestamp,
         type: Alexa.getRequestType(handlerInput.requestEnvelope).split('.').pop()
-      });
+      };
       // Initialize sync list client
       const client = new SyncListClient(
         handlerInput.serviceClientFactory.getListManagementServiceClient(), attributes.syncedList);
@@ -48,7 +46,7 @@ const SkillEventHandler = {
     try {
       // Define attributes object
       const attributes = {
-        clientId: config.OUR_GROCERIES_USERNAME
+        clientId: process.env.OUR_GROCERIES_USERNAME
       };
       // Determine accepted permissions
       const permissions = (handlerInput.requestEnvelope.request.body.acceptedPermissions || []).map(
@@ -67,7 +65,7 @@ const SkillEventHandler = {
         await handlerInput.attributesManager.savePersistentAttributes();
         console.info('User attributes have been saved.');
         // Create OurGroceries list sync event schedule
-        await events.createSchedule(
+        await createEventSchedule(
           handlerInput.context.invokedFunctionArn, Alexa.getUserId(handlerInput.requestEnvelope));
         console.info('Event schedule has been created.');
       } else {
@@ -75,7 +73,7 @@ const SkillEventHandler = {
         await handlerInput.attributesManager.deletePersistentAttributes();
         console.info('User attributes have been deleted.');
         // Delete OurGroceries list sync event schedule
-        await events.deleteSchedule();
+        await deleteEventSchedule();
         console.info('Event schedule has been deleted.');
       }
     } catch (error) {
@@ -128,7 +126,7 @@ const LogRequestInterceptor = {
 };
 
 const persistenceAdapter = new DynamoDbPersistenceAdapter({
-  tableName: config.AWS_TABLE_NAME,
+  tableName: process.env.TABLE_NAME,
   partitionKeyName: 'userId'
 });
 
@@ -137,9 +135,7 @@ const scheduledEventHandler = async (event) => {
     console.log('Event received:', JSON.stringify(event));
     // Send skill message if relevant event type
     if (event.type === 'skillMessaging') {
-      const api = new SkillMessagingApi(
-        config.ALEXA_API_URL, config.SKILL_CLIENT_ID, config.SKILL_CLIENT_SECRET, event.userId);
-      await api.sendMessage(event.message);
+      await sendSkillMessage(event.userId, event.message);
       console.log('Skill message sent:', JSON.stringify(event.message));
     }
   } catch (error) {
@@ -157,8 +153,8 @@ const skillHandler = Alexa.SkillBuilders.custom()
   .addRequestInterceptors(LogRequestInterceptor)
   .withApiClient(new Alexa.DefaultApiClient())
   .withPersistenceAdapter(persistenceAdapter)
-  .withSkillId(config.SKILL_ID)
+  .withSkillId(process.env.SKILL_ID)
   .lambda();
 
-exports.handler = (event, context, callback) =>
+export const handler = (event, context, callback) =>
   (event.source === 'aws.events' ? scheduledEventHandler : skillHandler)(event, context, callback);

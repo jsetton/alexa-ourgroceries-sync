@@ -59,6 +59,6 @@ $ ask configure
     [Warn]: CliWarn: Skill api domain "householdList" cannot be enabled. Skip the enable process.
     ```
 
-3. In your [Alexa Skill Console](https://alexa.amazon.com/spa/index.html#skills/your-skills), find the OurGroceries List Sync skill under the "Dev Skills" tab and enable it. Make sure that the Lists Read/Write Access permissions are enabled.
+3. In your Alexa app, go to More > Skills & Games, find the OurGroceries List Sync skill under Your Skills > Dev tab and enable it. Make sure that the Lists Read/Write Access permissions are granted.
 
 4. That should be it! Now, just say to your favorite Echo device: "*Alexa, add milk and eggs to my shopping list*". Both items should be added right away to your OurGroceries' shopping list. Changes made to that list, on the OurGroceries side, are synchronized back to the Alexa's list, every 30 minutes. It is important to note that when first enabling the skill, the Alexa shopping list will be updated to mirror the OurGroceries one, potentially removing any items that aren't on the latter list.
