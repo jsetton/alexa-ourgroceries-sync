@@ -31,7 +31,7 @@ const HouseholdListEventHandler = {
       await handlerInput.attributesManager.savePersistentAttributes();
       console.info('User attributes have been saved.');
     } catch (error) {
-      console.error('Failed to handle household list items event:', JSON.stringify(error));
+      console.error('Failed to handle household list items event:', error);
     }
   }
 };
@@ -77,7 +77,7 @@ const SkillEventHandler = {
         console.info('Event schedule has been deleted.');
       }
     } catch (error) {
-      console.error('Failed to handle skill permission event:', JSON.stringify(error));
+      console.error('Failed to handle skill permission event:', error);
     }
   }
 };
@@ -103,7 +103,7 @@ const SkillMessagingHandler = {
       await handlerInput.attributesManager.savePersistentAttributes();
       console.info('User attributes have been saved.');
     } catch (error) {
-      console.error('Failed to handle skill messaging event:', JSON.stringify(error));
+      console.error('Failed to handle skill messaging event:', error);
     }
   }
 }
@@ -113,7 +113,7 @@ const ErrorHandler = {
     return true;
   },
   handle(handlerInput, error) {
-    console.error('Request error:', JSON.stringify(error));
+    console.error('Request error:', error);
   }
 };
 
@@ -139,7 +139,7 @@ const scheduledEventHandler = async (event) => {
       console.log('Skill message sent:', JSON.stringify(event.message));
     }
   } catch (error) {
-    console.error(`Failed to handle scheduled event ${event.type}:`, JSON.stringify(error));
+    console.error(`Failed to handle scheduled event ${event.type}:`, error);
   }
 };
 

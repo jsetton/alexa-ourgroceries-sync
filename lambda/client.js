@@ -4,7 +4,7 @@ import OurGroceriesClient from './api/ourGroceries.js';
  * Defines item value pattern
  * @type {RegExp}
  */
-const ITEM_VALUE_PATTERN = /^([\w\s]+)(?: \((\d+)\))?$/;
+const ITEM_VALUE_PATTERN = /^(.+)(?: \((\d+)\))?$/;
 
 /**
  * Defines sync list client class
@@ -144,8 +144,7 @@ export default class SyncListClient {
       alexaItems.forEach((alexaItem) => {
         if (request.type === 'ItemsCreated') {
           // Determine synced item with alexa item value
-          const syncedItem = syncedItems.find(item =>
-            item.value.toLowerCase() === alexaItem.value.toLowerCase());
+          const syncedItem = syncedItems.find(item => item.value.toLowerCase() === alexaItem.value.toLowerCase());
 
           if (syncedItem) {
             // Update existing item only if updated time on synced item is less than alexa item
