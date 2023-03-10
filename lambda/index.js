@@ -6,9 +6,11 @@ import { createEventSchedule, deleteEventSchedule } from './events.js';
 
 const HouseholdListEventHandler = {
   canHandle(handlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaHouseholdListEvent.ItemsCreated' ||
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaHouseholdListEvent.ItemsCreated' ||
       Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaHouseholdListEvent.ItemsUpdated' ||
-      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaHouseholdListEvent.ItemsDeleted';
+      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaHouseholdListEvent.ItemsDeleted'
+    );
   },
   async handle(handlerInput) {
     try {
@@ -22,7 +24,9 @@ const HouseholdListEventHandler = {
       };
       // Initialize sync list client
       const client = new SyncListClient(
-        handlerInput.serviceClientFactory.getListManagementServiceClient(), attributes.syncedList);
+        handlerInput.serviceClientFactory.getListManagementServiceClient(),
+        attributes.syncedList
+      );
       // Update synced list attribute based on OurGroceries list changes
       attributes.syncedList = await client.updateOurGroceriesList(request);
       console.info('OurGroceries shopping list has been synced.', JSON.stringify(attributes.syncedList));
@@ -38,27 +42,27 @@ const HouseholdListEventHandler = {
 
 const SkillEventHandler = {
   canHandle(handlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillDisabled' ||
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillDisabled' ||
       Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillPermissionAccepted' ||
-      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillPermissionChanged';
+      Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillPermissionChanged'
+    );
   },
   async handle(handlerInput) {
     try {
-      // Define attributes object
-      const attributes = {
-        clientId: process.env.OUR_GROCERIES_USERNAME
-      };
       // Determine accepted permissions
-      const permissions = (handlerInput.requestEnvelope.request.body.acceptedPermissions || []).map(
-        permission => permission.scope.split(':').pop());
-
+      const permissions = (handlerInput.requestEnvelope.request.body.acceptedPermissions || []).map((permission) =>
+        permission.scope.split(':').pop()
+      );
       // Update alexa shopping list if read/write permissions accepted, otherwise clean up database
       if (permissions.includes('read') && permissions.includes('write')) {
         // Initialize sync list client
-        const client = new SyncListClient(
-          handlerInput.serviceClientFactory.getListManagementServiceClient());
-        // Update synced list attribute based on Alexa list changes
-        attributes.syncedList = await client.updateAlexaList();
+        const client = new SyncListClient(handlerInput.serviceClientFactory.getListManagementServiceClient());
+        // Define attributes object with synced list based on Alexa list changes
+        const attributes = {
+          clientId: process.env.OUR_GROCERIES_USERNAME,
+          syncedList: await client.updateAlexaList()
+        };
         console.info('Alexa shopping list has been synced.', JSON.stringify(attributes.syncedList));
         // Store user attributes to database
         handlerInput.attributesManager.setPersistentAttributes(attributes);
@@ -66,7 +70,9 @@ const SkillEventHandler = {
         console.info('User attributes have been saved.');
         // Create OurGroceries list sync event schedule
         await createEventSchedule(
-          handlerInput.context.invokedFunctionArn, Alexa.getUserId(handlerInput.requestEnvelope));
+          handlerInput.context.invokedFunctionArn,
+          Alexa.getUserId(handlerInput.requestEnvelope)
+        );
         console.info('Event schedule has been created.');
       } else {
         // Delete user attributes to database
@@ -89,10 +95,9 @@ const SkillMessagingHandler = {
   async handle(handlerInput) {
     try {
       // Get latest user attributes from database
-      const attributes = await handlerInput.attributesManager.getPersistentAttributes()
+      const attributes = await handlerInput.attributesManager.getPersistentAttributes();
       // Initialize sync list client
-      const client = new SyncListClient(
-        handlerInput.serviceClientFactory.getListManagementServiceClient());
+      const client = new SyncListClient(handlerInput.serviceClientFactory.getListManagementServiceClient());
       // Update synced list attribute based on Alexa list changes if requested
       if (handlerInput.requestEnvelope.request.message.event === 'updateAlexaList') {
         attributes.syncedList = await client.updateAlexaList();
@@ -106,7 +111,7 @@ const SkillMessagingHandler = {
       console.error('Failed to handle skill messaging event:', error);
     }
   }
-}
+};
 
 const ErrorHandler = {
   canHandle() {
@@ -144,11 +149,7 @@ const scheduledEventHandler = async (event) => {
 };
 
 const skillHandler = Alexa.SkillBuilders.custom()
-  .addRequestHandlers(
-    HouseholdListEventHandler,
-    SkillEventHandler,
-    SkillMessagingHandler
-  )
+  .addRequestHandlers(HouseholdListEventHandler, SkillEventHandler, SkillMessagingHandler)
   .addErrorHandlers(ErrorHandler)
   .addRequestInterceptors(LogRequestInterceptor)
   .withApiClient(new Alexa.DefaultApiClient())
