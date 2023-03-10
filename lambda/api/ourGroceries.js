@@ -165,7 +165,7 @@ export default class OurGroceriesClient {
       url: 'your-lists/',
       json: {
         ...parameters,
-        teamId: this.teamId || await this.signIn()
+        teamId: this.teamId || (await this.signIn())
       }
     };
     return this.client(options).json();
@@ -186,6 +186,8 @@ export default class OurGroceriesClient {
         action: 'sign-in'
       }
     };
-    return this.client(options).text().then((response) => this.teamId = response.match(TEAM_ID_PATTERN)[1]);
+    return this.client(options)
+      .text()
+      .then((response) => (this.teamId = response.match(TEAM_ID_PATTERN)[1]));
   }
 }
