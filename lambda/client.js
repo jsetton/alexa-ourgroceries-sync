@@ -26,20 +26,22 @@ export default class SyncListClient {
    * @return {Promise}
    */
   async getAlexaShoppingList() {
+    const listName = process.env.ALEXA_SHOPPING_LIST;
     // Get all lists
     const { lists } = await this.householdListManager.getListsMetadata();
     // Find shopping list
-    const match = lists.find((list) => list.name === process.env.ALEXA_SHOPPING_LIST);
-
-    if (typeof match !== 'undefined') {
-      // Get shopping list active and completed items
-      const [active, completed] = await Promise.all([
-        this.householdListManager.getList(match.listId, 'active'),
-        this.householdListManager.getList(match.listId, 'completed')
-      ]);
-      // Return shopping list merging active & completed items
-      return { ...active, items: [].concat(active.items, completed.items) };
+    const result = lists.find((list) => list.name === listName);
+    // Throw error if no shopping list found
+    if (typeof result === 'undefined') {
+      throw new Error(`No Alexa shopping list '${listName}' found`);
     }
+    // Get shopping list active and completed items
+    const [active, completed] = await Promise.all([
+      this.householdListManager.getList(result.listId, 'active'),
+      this.householdListManager.getList(result.listId, 'completed')
+    ]);
+    // Return shopping list merging active & completed items
+    return { ...active, items: [...active.items, ...completed.items] };
   }
 
   /**
@@ -47,17 +49,19 @@ export default class SyncListClient {
    * @return {Promise}
    */
   async getOurGroceriesShoppingList() {
+    const listName = process.env.OUR_GROCERIES_SHOPPING_LIST;
     // Get shopping lists
     const { shoppingLists } = await this.ourGroceriesClient.getLists();
     // Find shopping list
-    const match = shoppingLists.find((list) => list.name === process.env.OUR_GROCERIES_SHOPPING_LIST);
-
-    if (typeof match !== 'undefined') {
-      // Get shopping list details
-      const { list } = await this.ourGroceriesClient.getList(match.id);
-      // Return shopping list values
-      return list;
+    const result = shoppingLists.find((list) => list.name === listName);
+    // Throw error if no shopping list found
+    if (typeof result === 'undefined') {
+      throw new Error(`No OurGroceries shopping list '${listName}' found`);
     }
+    // Get shopping list details
+    const { list } = await this.ourGroceriesClient.getList(result.id);
+    // Return shopping list values
+    return list;
   }
 
   /**
