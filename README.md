@@ -14,16 +14,31 @@ It is leveraging the Alexa Skills Kit Command Line Interface (ASK CLI) to stream
 
 ## Prerequisites
 
+### Alexa Skills Kit CLI with Amazon AWS and Developer Accounts
+
 You need an [AWS account](https://aws.amazon.com) and an [Amazon developer account](https://developer.amazon.com) to create an Alexa Skill.
 
 In order to use the ASK CLI features to automatically deploy and manage your Lambda skill, ensure that you have AWS credentials set up with the appropriate permissions on the computer to which you are installing ASK CLI, as described in [Set Up Credentials for an Amazon Web Services (AWS) Account](https://developer.amazon.com/docs/smapi/set-up-credentials-for-an-amazon-web-services-account.html).
 
 You will have to install the latest [ASK CLI](https://developer.amazon.com/docs/smapi/quick-start-alexa-skills-kit-command-line-interface.html), and then configure it:
 
+```shell
+npm install -g ask-cli
+ask configure
 ```
-$ npm install -g ask-cli
-$ ask configure
-```
+
+### Login with Amazon Security Profile
+
+In order to fulfill the skill account linking requirement, you need to create a [Login with Amazon](https://developer.amazon.com/loginwithamazon/console/site/lwa/overview.html) (LWA) security profile and take a note of the associated OAuth2 credentials. See [this post](https://developer.amazon.com/public/community/post/Tx3CX1ETRZZ2NPC/Alexa-Account-Linking-5-Steps-to-Seamlessly-Link-Your-Alexa-Skill-with-Login-wit) to set it up for your private skill. Fill the [Create Security Profile](https://developer.amazon.com/loginwithamazon/console/site/lwa/create-security-profile.html) form as follow:
+
+* Security Profile Name: `alexa-ourgroceries-sync`
+* Security Profile Description: `Unofficial OurGroceries Alexa Shopping List Synchronization Skill`
+* Consent Privacy Notice URL: `https://www.ourgroceries.com/privacy`
+* Consent Logo Image: [Logo](skill-package/assets/images/en-US_smallIcon.png)
+
+Once created, take note of the OAuth2 credentials and update the Web Settings as below. The Allowed Return URL should include your [vendor ID](https://developer.amazon.com/settings/console/mycid).
+
+* Allowed Return URLs: `https://pitangui.amazon.com/api/skill/link/<vendorId>`
 
 ## Deployment
 
@@ -37,28 +52,37 @@ $ ask configure
     | `AlexaShoppingList` | The Alexa shopping list name if you don't want to use the standard list. (Optional) |
 
 2. Deploy the skill and all AWS resources in one step:
-    ```
-    $ ask deploy
-    Deploy configuration loaded from ask-resources.json
-    Deploy project for profile [default]
-
-    ==================== Deploy Skill Metadata ====================
-    Skill package deployed successfully.
-    Skill ID: <skillId>
-
-    ==================== Build Skill Code ====================
-    Skill code built successfully.
-    Code for region default built to <skillPath>/.ask/lambda/build.zip successfully with build flow NodeJsNpmBuildFlow.
-
-    ==================== Deploy Skill Infrastructure ====================
-    ✔ Deploy Alexa skill infrastructure for region "default"
-    The api endpoints of skill.json have been updated from the skill infrastructure deploy results.
-    Skill infrastructures deployed successfully through @ask-cli/cfn-deployer.
-
-    ==================== Enable Skill ====================
-    [Warn]: CliWarn: Skill api domain "householdList" cannot be enabled. Skip the enable process.
+    ```shell
+    ask deploy
     ```
 
-3. In your Alexa app, go to More > Skills & Games, find the OurGroceries List Sync skill under Your Skills > Dev tab and enable it. Make sure that the Lists Read/Write Access permissions are granted.
+3. Setup the skill account linking:
+    1. Create the skill account linking request file as `skill-package/accountLinking.json`, adding your [LWA Security Profile](#login-with-amazon-security-profile) OAuth2 credentials:
+        ```json
+        {
+          "accountLinkingRequest": {
+            "skipOnEnablement": "false",
+            "type": "AUTH_CODE",
+            "authorizationUrl": "https://www.amazon.com/ap/oa",
+            "accessTokenUrl": "https://api.amazon.com/auth/o2/token",
+            "accessTokenScheme": "HTTP_BASIC",
+            "clientId": "<clientId>",
+            "clientSecret": "<clientSecret>",
+            "scopes": [
+              "profile"
+            ]
+          }
+        }
+        ```
 
-4. That should be it! Now, just say to your favorite Echo device: "*Alexa, add milk and eggs to my shopping list*". Both items should be added right away to your OurGroceries' shopping list. Changes made to that list, on the OurGroceries side, are synchronized back to the Alexa's list, every 30 minutes. It is important to note that when first enabling the skill, the Alexa shopping list will be updated to mirror the OurGroceries one, potentially removing any items that aren't on the latter list.
+    2. Update the skill account linking information, using the skill ID displayed in the deploy step:
+        ```shell
+        ask smapi update-account-linking-info -s <skillId> --account-linking-request file:skill-package/accountLinking.json
+        ```
+4. Enable the skill on your Alexa account:
+    * In your Alexa app, go to More > Skills & Games page
+    * Select the "OurGroceries List Sync" skill under Your Skills > Dev tab
+    * Tap "Enable to Use" and go through the account linking process
+    * Grant the Lists Read/Write Access permissions
+
+5. That should be it! Now, just say to your favorite Echo device: "*Alexa, add milk and eggs to my shopping list*". Both items should be added right away to your OurGroceries' shopping list. Changes made to that list, on the OurGroceries side, are synchronized back to the Alexa's list, every 30 minutes. It is important to note that when first enabling the skill, the Alexa shopping list will be updated to mirror the OurGroceries one, potentially removing any items that aren't on the latter list.
