@@ -57,7 +57,7 @@ Once created, take note of the OAuth2 credentials and update the Web Settings as
     ```
 
 3. Setup the skill account linking:
-    1. Create the skill account linking request file as `skill-package/accountLinking.json`, adding your [LWA Security Profile](#login-with-amazon-security-profile) OAuth2 credentials:
+    1. Create the skill account linking request file as `accountLinking.json`, adding your [LWA Security Profile](#login-with-amazon-security-profile) OAuth2 credentials:
         ```json
         {
           "accountLinkingRequest": {

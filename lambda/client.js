@@ -4,7 +4,7 @@ import OurGroceriesClient from './api/ourGroceries.js';
  * Defines item value pattern
  * @type {RegExp}
  */
-const ITEM_VALUE_PATTERN = /^(.+)(?: \((\d+)\))?$/;
+const ITEM_VALUE_PATTERN = /^(.+?)(?: \((\d+)\))?$/;
 
 /**
  * Defines sync list client class
