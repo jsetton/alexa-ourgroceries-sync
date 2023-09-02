@@ -77,7 +77,7 @@ Once created, take note of the OAuth2 credentials and update the Web Settings as
 
     2. Update the skill account linking information, using the skill ID displayed in the deploy step:
         ```shell
-        ask smapi update-account-linking-info -s <skillId> --account-linking-request file:skill-package/accountLinking.json
+        ask smapi update-account-linking-info -s <skillId> --account-linking-request file:accountLinking.json
         ```
 4. Enable the skill on your Alexa account:
     * In your Alexa app, go to More > Skills & Games page
