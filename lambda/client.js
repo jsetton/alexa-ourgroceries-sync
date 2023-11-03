@@ -150,9 +150,9 @@ export default class SyncListClient {
     const syncedItems = this.syncedList.items;
     const promises = [];
 
-    // Throw error if no synced list defined
-    if (typeof this.syncedList === 'undefined') {
-      throw new Error('No synced list defined');
+    // Throw error if invalid synced list
+    if (typeof this.syncedList.alexaId === 'undefined') {
+      throw new Error('Invalid synced list');
     }
 
     // Throw error if request not from our alexa shopping list
