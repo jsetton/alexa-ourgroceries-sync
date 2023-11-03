@@ -45,7 +45,7 @@ In order to fulfill the skill account linking requirement, you need to create a 
 * Security Profile Name: `alexa-ourgroceries-sync`
 * Security Profile Description: `Unofficial OurGroceries Alexa Shopping List Synchronization Skill`
 * Consent Privacy Notice URL: `https://www.ourgroceries.com/privacy`
-* Consent Logo Image: [Logo](skill-package/assets/images/en-US_smallIcon.png)
+* Consent Logo Image: [Logo](skill-package/assets/images/ourGroceries_smallIcon.png)
 
 Once created, take note of the OAuth2 credentials and update the Web Settings as below. The Allowed Return URL should include your [vendor ID](https://developer.amazon.com/settings/console/mycid).
 
