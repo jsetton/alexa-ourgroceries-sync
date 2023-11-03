@@ -1,13 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  AlexaApiUrl:
-    Default: https://api.amazonalexa.com
-    Type: String
   AlexaShoppingList:
     Default: Alexa shopping list
-    Type: String
-  LwaApiUrl:
-    Default: https://api.amazon.com
     Type: String
   OurGroceriesApiUrl:
     Default: https://www.ourgroceries.com
@@ -43,6 +37,17 @@ Parameters:
     Type: String
   CodeVersion:
     Type: String
+Mappings:
+  RegionalMap:
+    us-east-1:
+      AlexaApiUrl: https://api.amazonalexa.com
+      LwaApiUrl: https://api.amazon.com
+    eu-west-1:
+      AlexaApiUrl: https://api.eu.amazonalexa.com
+      LwaApiUrl: https://api.amazon.co.uk
+    us-west-2:
+      AlexaApiUrl: https://api.fe.amazonalexa.com
+      LwaApiUrl: https://api.amazon.co.jp
 Resources:
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
@@ -111,12 +116,12 @@ Resources:
       Runtime: !Ref LambdaRuntime
       Role: !GetAtt AlexaSkillIAMRole.Arn
       MemorySize: 128
-      Timeout: 5
+      Timeout: 20
       Environment:
         Variables:
-          ALEXA_API_URL: !Ref AlexaApiUrl
+          ALEXA_API_URL: !FindInMap [ RegionalMap, !Ref AWS::Region, AlexaApiUrl ]
           ALEXA_SHOPPING_LIST: !Ref AlexaShoppingList
-          LWA_API_URL: !Ref LwaApiUrl
+          LWA_API_URL: !FindInMap [ RegionalMap, !Ref AWS::Region, LwaApiUrl ]
           OUR_GROCERIES_API_URL: !Ref OurGroceriesApiUrl
           OUR_GROCERIES_USERNAME: !Ref OurGroceriesUsername
           OUR_GROCERIES_PASSWORD: !Ref OurGroceriesPassword

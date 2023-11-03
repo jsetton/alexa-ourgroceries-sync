@@ -150,144 +150,151 @@ export default class SyncListClient {
     const syncedItems = this.syncedList.items;
     const promises = [];
 
-    // Handle request if from alexa shopping list
-    if (this.syncedList.alexaId === request.listId) {
-      // Get alexa items data based on request item ids if not delete request, otherwise use id only
-      const alexaItems = await Promise.all(
-        request.listItemIds.map((itemId) =>
-          request.type === 'ItemsDeleted'
-            ? { id: itemId }
-            : this.householdListManager.getListItem(request.listId, itemId)
-        )
-      );
+    // Throw error if no synced list defined
+    if (typeof this.syncedList === 'undefined') {
+      throw new Error('No synced list defined');
+    }
 
-      alexaItems.forEach((alexaItem) => {
-        if (request.type === 'ItemsCreated') {
-          // Determine synced item with alexa item value
-          const syncedItem = syncedItems.find((item) => item.value.toLowerCase() === alexaItem.value.toLowerCase());
+    // Throw error if request not from our alexa shopping list
+    if (this.syncedList.alexaId !== request.listId) {
+      throw new Error('Not from our Alexa shopping list');
+    }
 
-          if (syncedItem) {
-            // Update existing item only if updated time on synced item is less than alexa item
-            if (new Date(syncedItem.updatedTime).getTime() < new Date(alexaItem.updatedTime).getTime()) {
-              const quantity = syncedItem.status === 'active' ? syncedItem.quantity + 1 : 1;
-              const value = `${syncedItem.value}${quantity > 1 ? ` (${quantity})` : ''}`;
+    // Get alexa items data based on request item ids if not delete request, otherwise use id only
+    const alexaItems = await Promise.all(
+      request.listItemIds.map((itemId) =>
+        request.type === 'ItemsDeleted'
+          ? { id: itemId }
+          : this.householdListManager.getListItem(request.listId, itemId)
+      )
+    );
 
+    alexaItems.forEach((alexaItem) => {
+      if (request.type === 'ItemsCreated') {
+        // Determine synced item with alexa item value
+        const syncedItem = syncedItems.find((item) => item.value.toLowerCase() === alexaItem.value.toLowerCase());
+
+        if (syncedItem) {
+          // Update existing item only if updated time on synced item is less than alexa item
+          if (new Date(syncedItem.updatedTime).getTime() < new Date(alexaItem.updatedTime).getTime()) {
+            const quantity = syncedItem.status === 'active' ? syncedItem.quantity + 1 : 1;
+            const value = `${syncedItem.value}${quantity > 1 ? ` (${quantity})` : ''}`;
+
+            promises.push(
+              // Set ourGroceries item to be renamed to new value
+              this.ourGroceriesClient.renameItem(
+                this.syncedList.ourGroceriesId,
+                syncedItem.ourGroceriesId,
+                value,
+                syncedItem.categoryId
+              ),
+              // Set alexa newly created item to be deleted
+              this.householdListManager.deleteListItem(this.syncedList.alexaId, alexaItem.id),
+              // Set alexa synced item to be updated
+              this.householdListManager
+                .updateListItem(this.syncedList.alexaId, syncedItem.alexaId, {
+                  value: value,
+                  status: alexaItem.status,
+                  version: syncedItem.version
+                })
+                .then((item) => {
+                  // Update synced item
+                  syncedItem.status = item.status;
+                  syncedItem.updatedTime = new Date(item.updatedTime).toISOString();
+                  syncedItem.quantity = quantity;
+                  syncedItem.version = item.version;
+                })
+            );
+
+            // Set ourGroceries item crossed status to be updated if different
+            if (syncedItem.status !== alexaItem.status) {
               promises.push(
-                // Set ourGroceries item to be renamed to new value
+                this.ourGroceriesClient.setItemCrossedOff(
+                  this.syncedList.ourGroceriesId,
+                  syncedItem.ourGroceriesId,
+                  alexaItem.status === 'completed'
+                )
+              );
+            }
+          }
+        } else {
+          promises.push(
+            // Set ourGroceries item to be added
+            this.ourGroceriesClient
+              .addItem(this.syncedList.ourGroceriesId, alexaItem.value.toLowerCase())
+              .then(({ list, itemId }) => {
+                const ourGroceriesItem = list.items.find((item) => item.id === itemId);
+                // Add new synced item
+                syncedItems.push({
+                  alexaId: alexaItem.id,
+                  ourGroceriesId: ourGroceriesItem.id,
+                  categoryId: ourGroceriesItem.categoryId,
+                  status: alexaItem.status,
+                  updatedTime: new Date(alexaItem.updatedTime).toISOString(),
+                  value: ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1],
+                  quantity: ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1,
+                  version: alexaItem.version
+                });
+              })
+          );
+        }
+      } else if (request.type === 'ItemsUpdated') {
+        // Determine synced item with alexa item id
+        const syncedItem = syncedItems.find((item) => item.alexaId === alexaItem.id);
+
+        if (syncedItem) {
+          // Update existing item only if updated time on synced item is lower than alexa item
+          if (new Date(syncedItem.updatedTime).getTime() < new Date(alexaItem.updatedTime).getTime()) {
+            const [value, quantity = 1] = ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase());
+
+            // Set ourGroceries item to be renamed if alexa value or quantity different than synced item
+            if (syncedItem.value !== value || syncedItem.quantity !== quantity) {
+              promises.push(
                 this.ourGroceriesClient.renameItem(
                   this.syncedList.ourGroceriesId,
                   syncedItem.ourGroceriesId,
-                  value,
+                  alexaItem.value.toLowerCase(),
                   syncedItem.categoryId
-                ),
-                // Set alexa newly created item to be deleted
-                this.householdListManager.deleteListItem(this.syncedList.alexaId, alexaItem.id),
-                // Set alexa synced item to be updated
-                this.householdListManager
-                  .updateListItem(this.syncedList.alexaId, syncedItem.alexaId, {
-                    value: value,
-                    status: alexaItem.status,
-                    version: syncedItem.version
-                  })
-                  .then((item) => {
-                    // Update synced item
-                    syncedItem.status = item.status;
-                    syncedItem.updatedTime = new Date(item.updatedTime).toISOString();
-                    syncedItem.quantity = quantity;
-                    syncedItem.version = item.version;
-                  })
+                )
               );
-
-              // Set ourGroceries item crossed status to be updated if different
-              if (syncedItem.status !== alexaItem.status) {
-                promises.push(
-                  this.ourGroceriesClient.setItemCrossedOff(
-                    this.syncedList.ourGroceriesId,
-                    syncedItem.ourGroceriesId,
-                    alexaItem.status === 'completed'
-                  )
-                );
-              }
             }
-          } else {
-            promises.push(
-              // Set ourGroceries item to be added
-              this.ourGroceriesClient
-                .addItem(this.syncedList.ourGroceriesId, alexaItem.value.toLowerCase())
-                .then(({ list, itemId }) => {
-                  const ourGroceriesItem = list.items.find((item) => item.id === itemId);
-                  // Add new synced item
-                  syncedItems.push({
-                    alexaId: alexaItem.id,
-                    ourGroceriesId: ourGroceriesItem.id,
-                    categoryId: ourGroceriesItem.categoryId,
-                    status: alexaItem.status,
-                    updatedTime: new Date(alexaItem.updatedTime).toISOString(),
-                    value: ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1],
-                    quantity: ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1,
-                    version: alexaItem.version
-                  });
-                })
-            );
-          }
-        } else if (request.type === 'ItemsUpdated') {
-          // Determine synced item with alexa item id
-          const syncedItem = syncedItems.find((item) => item.alexaId === alexaItem.id);
 
-          if (syncedItem) {
-            // Update existing item only if updated time on synced item is lower than alexa item
-            if (new Date(syncedItem.updatedTime).getTime() < new Date(alexaItem.updatedTime).getTime()) {
-              const [value, quantity = 1] = ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase());
-
-              // Set ourGroceries item to be renamed if alexa value or quantity different than synced item
-              if (syncedItem.value !== value || syncedItem.quantity !== quantity) {
-                promises.push(
-                  this.ourGroceriesClient.renameItem(
-                    this.syncedList.ourGroceriesId,
-                    syncedItem.ourGroceriesId,
-                    alexaItem.value.toLowerCase(),
-                    syncedItem.categoryId
-                  )
-                );
-              }
-
-              // Set ourGroceries item crossed status to be updated if different
-              if (syncedItem.status !== alexaItem.status) {
-                promises.push(
-                  this.ourGroceriesClient.setItemCrossedOff(
-                    this.syncedList.ourGroceriesId,
-                    syncedItem.ourGroceriesId,
-                    alexaItem.status === 'completed'
-                  )
-                );
-              }
-
-              // Update synced item
-              syncedItem.status = alexaItem.status;
-              syncedItem.updatedTime = new Date(alexaItem.updatedTime).toISOString();
-              syncedItem.value = ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1];
-              syncedItem.quantity = ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1;
-              syncedItem.version = alexaItem.version;
+            // Set ourGroceries item crossed status to be updated if different
+            if (syncedItem.status !== alexaItem.status) {
+              promises.push(
+                this.ourGroceriesClient.setItemCrossedOff(
+                  this.syncedList.ourGroceriesId,
+                  syncedItem.ourGroceriesId,
+                  alexaItem.status === 'completed'
+                )
+              );
             }
-          } else {
-            // Set alexa updated item to be deleted
-            promises.push(this.householdListManager.deleteListItem(this.syncedList.alexaId, alexaItem.id));
-          }
-        } else if (request.type === 'ItemsDeleted') {
-          // Determine synced item index with alexa item id
-          const index = syncedItems.findIndex((item) => item.alexaId === alexaItem.id);
 
-          // Set ourGroceries item to be deleted if found
-          if (index > -1) {
-            promises.push(
-              this.ourGroceriesClient.deleteItem(this.syncedList.ourGroceriesId, syncedItems[index].ourGroceriesId)
-            );
-            // Remove deleted synced item
-            syncedItems.splice(index, 1);
+            // Update synced item
+            syncedItem.status = alexaItem.status;
+            syncedItem.updatedTime = new Date(alexaItem.updatedTime).toISOString();
+            syncedItem.value = ITEM_VALUE_PATTERN.exec(alexaItem.value.toLowerCase())[1];
+            syncedItem.quantity = ITEM_VALUE_PATTERN.exec(alexaItem.value)[2] || 1;
+            syncedItem.version = alexaItem.version;
           }
+        } else {
+          // Set alexa updated item to be deleted
+          promises.push(this.householdListManager.deleteListItem(this.syncedList.alexaId, alexaItem.id));
         }
-      });
-    }
+      } else if (request.type === 'ItemsDeleted') {
+        // Determine synced item index with alexa item id
+        const index = syncedItems.findIndex((item) => item.alexaId === alexaItem.id);
+
+        // Set ourGroceries item to be deleted if found
+        if (index > -1) {
+          promises.push(
+            this.ourGroceriesClient.deleteItem(this.syncedList.ourGroceriesId, syncedItems[index].ourGroceriesId)
+          );
+          // Remove deleted synced item
+          syncedItems.splice(index, 1);
+        }
+      }
+    });
 
     // Apply all changes
     await Promise.all(promises);

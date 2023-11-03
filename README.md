@@ -27,6 +27,17 @@ npm install -g ask-cli
 ask configure
 ```
 
+By default, the ASK CLI deploys the skill resources in the `us-east-1` region. You will need to change your deploy region based on the skill language you are planning to use. You should refer to the table below, based on the [smart home multi-languages development guidelines](https://developer.amazon.com/docs/smarthome/develop-smart-home-skills-in-multiple-languages.html#deploy):
+
+| Skill Language | Endpoint Region | Deploy Region |
+| -------------- | --------------- | ------------- |
+| English (CA), English (US) | North America | `us-east-1` |
+| English (UK) | Europe | `eu-west-1` |
+| English (IN) | India | `eu-west-1` |
+| English (AU) | Far East | `us-west-2` |
+
+To change your deploy region, update the `awsRegion` skill infrastructure user config parameter in [`ask-resources.json`](ask-resources.json).
+
 ### Login with Amazon Security Profile
 
 In order to fulfill the skill account linking requirement, you need to create a [Login with Amazon](https://developer.amazon.com/loginwithamazon/console/site/lwa/overview.html) (LWA) security profile and take a note of the associated OAuth2 credentials. See [this post](https://developer.amazon.com/public/community/post/Tx3CX1ETRZZ2NPC/Alexa-Account-Linking-5-Steps-to-Seamlessly-Link-Your-Alexa-Skill-with-Login-wit) to set it up for your private skill. Fill the [Create Security Profile](https://developer.amazon.com/loginwithamazon/console/site/lwa/create-security-profile.html) form as follow:
