@@ -7,8 +7,36 @@
           "name": "OurGroceries List Sync",
           "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
           "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
-          "largeIconUri": "file://assets/images/en-US_largeIcon.png",
-          "smallIconUri": "file://assets/images/en-US_smallIcon.png"
+          "largeIconUri": "file://assets/images/ourGroceries_largeIcon.png",
+          "smallIconUri": "file://assets/images/ourGroceries_smallIcon.png"
+        },
+        "en-AU": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "largeIconUri": "file://assets/images/ourGroceries_largeIcon.png",
+          "smallIconUri": "file://assets/images/ourGroceries_smallIcon.png"
+        },
+        "en-CA": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "largeIconUri": "file://assets/images/ourGroceries_largeIcon.png",
+          "smallIconUri": "file://assets/images/ourGroceries_smallIcon.png"
+        },
+        "en-GB": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "largeIconUri": "file://assets/images/ourGroceries_largeIcon.png",
+          "smallIconUri": "file://assets/images/ourGroceries_smallIcon.png"
+        },
+        "en-IN": {
+          "name": "OurGroceries List Sync",
+          "summary": "Unofficial OurGroceries Alexa Shopping List Synchronization Skill",
+          "description": "This skill provides Alexa shopping list synchronization with a specific OurGroceries list.",
+          "largeIconUri": "file://assets/images/ourGroceries_largeIcon.png",
+          "smallIconUri": "file://assets/images/ourGroceries_smallIcon.png"
         }
       },
       "distributionCountries": [],
