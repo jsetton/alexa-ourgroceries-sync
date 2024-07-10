@@ -2,6 +2,8 @@
 
 Unofficial OurGroceries Alexa Shopping List Synchronization Skill
 
+As of July 1st 2024, [Amazon deprecated the List Skill API](https://developer.amazon.com/en-US/docs/alexa/ask-overviews/deprecated-features.html#shopping-lists) causing this skill to be defuncted.
+
 ## Disclaimer
 
 **The is an unofficial skill meaning it should only be used for personal usage. I do not have any affiliations with OurGroceries or Amazon.**
